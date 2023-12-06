@@ -1,15 +1,44 @@
-from django.views.generic.base import TemplateView
-from django.apps import apps
+from django.views.generic import ListView, DetailView
+from django.shortcuts import get_object_or_404, render
+from polls.models import Question, Choice
+from django.http import HttpResponse
+import logging
+logger = logging.getLogger(__name__)
 
-class HomeView(TemplateView):
-    template_name = 'home.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        #context['.app_list'] = ['polls', 'books']
-        dictVerbose = {}
-        for app in app.get_app_configs():
-            if 'site-packages' not in app.path:
-                dictVerbose[app.label] = app.verbose_nbame
-        context['verbose_dict'] = dictVerbose
-        return context
+def voet(request, question_id):
+    logger.debug(f"vote().question_id: {question_id}")
+    question = get_object_or_404(Question, pk=question_id)
+
+class IndexView(ListView):
+    template_name = 'polls/index.html'
+    context_object_name = 'questions'
+
+    def get_queryset(self):
+        """
+        return the last five published questions.
+        """
+        return Question.objects.order_by('-pub_date')[:5]
+
+
+class vote(DetailView):
+    model = Question
+    template_name = 'polls/vote.html'
+
+    def get_object(self, queryset=None):
+        """
+        Returns the object the view is displaying.
+
+        This is overridden to get the object by the primary key (`pk`) from the URL.
+        """
+        question_id = self.kwargs.get('question_id', None)
+        return get_object_or_404(Question, pk=question_id)
+
+
+class ResultsView(DetailView):
+    model = Question
+    template_name = 'polls/results.html'
+
+class Detailview(DetailView):
+    model = Question
+    template_name = 'polls/detail.html'
